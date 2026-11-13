@@ -27,6 +27,14 @@ Scans are read-only. Nothing is deleted or moved until you confirm the action in
 - **Recommendations (optional, off by default)** — Built-in rules with no network, or an OpenAI-compatible provider such as OpenRouter, LM Studio or Ollama. Suggestions are allowlisted and re-validated on the server. The recommender never proposes emptying the Recycle Bin or sending raw file lists to recycle. Every apply step still requires confirmation.
 - **Admin relaunch** — Some Windows locations need elevation. The app can request a UAC prompt; it never elevates automatically.
 
+## Screenshots
+
+![PC Cleanup dashboard after a Smart Scan, with the health score and space you could free](docs/screenshot-dashboard.png)
+
+| Recommendations | Organize preview |
+| --- | --- |
+| ![AI and rule-based recommendations, each with impact, a risk tag, and Apply or Review](docs/screenshot-ai-recommendations.png) | ![Organize dry-run sorting a Downloads folder by type before anything moves](docs/screenshot-organize-preview.png) |
+
 ## Download
 
 The installer is the supported way to install PC Cleanup & Organizer:
