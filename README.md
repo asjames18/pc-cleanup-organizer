@@ -5,7 +5,7 @@ A local Windows app for cleanup, organization, protection, startup, uninstall an
 [![Latest release](https://img.shields.io/github/v/release/asjames18/pc-cleanup-organizer)](https://github.com/asjames18/pc-cleanup-organizer/releases/latest)
 ![Platform](https://img.shields.io/badge/Windows-10%20%2F%2011-0078D6?logo=windows&logoColor=white)
 ![Python](https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&logoColor=white)
-![License](https://img.shields.io/badge/license-not%20specified-lightgrey)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ## Overview
 
@@ -139,9 +139,9 @@ The optional environment variable `CLEANUP_PORT` changes the server port (defaul
 
 **A cleanup or uninstall needs administrator rights.** The app never elevates automatically. Approve the Windows UAC prompt only if you asked the app to relaunch as administrator or if Windows itself is uninstalling a program installed for all users.
 
-## License and third-party notices
+## License
 
-This repository does not include a `LICENSE` file, so a license is not specified here.
+This project is licensed under the [MIT License](LICENSE). Copyright (c) 2026 Antonio James.
 
 The app uses the Python standard library only. Optional recommendations may call an OpenAI-compatible endpoint that you configure (OpenRouter, LM Studio or Ollama). Optional application updates use winget, if it is installed. Python itself is licensed under the [PSF License](https://docs.python.org/3/license.html).
 
