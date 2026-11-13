@@ -1,0 +1,4 @@
+{"zip_prefix": "PCCleanup-Setup", "version_file": "cleanup.pyw", "version_regex": "^VERSION = \"([^\"]+)\"",
+ "app_files": ["cleanup.pyw", "cleanup.ico", "settings.example.json", "ai-settings.example.json"],
+ "top_files": ["Install-PCCleanup.cmd", "Uninstall-PCCleanup.cmd", "README.md"],
+ "installer_files": ["Install-PCCleanup.ps1", "Uninstall-PCCleanup.ps1", "SetupCommon.ps1"]}

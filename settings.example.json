@@ -1,0 +1,8 @@
+{
+  "old_days": 90,
+  "dup_min_kb": 100,
+  "skip_links": true,
+  "rule": "type",
+  "last_scan": "",
+  "saved_rules": []
+}
