@@ -7,7 +7,7 @@ from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 
 IS_WIN = os.name == "nt"
-VERSION = "3.1.1"
+VERSION = "3.1.2"
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -3144,6 +3144,7 @@ def smart_job(job):
     res["reclaimable"] = res["space"]["total"]
     SMART["last"] = res
     RECS["last"] = None
+    APPLIED.clear()  # fresh scan: show whatever is still really there
     save_json(SMART_FILE, res)
     log_action("SCAN", f"Smart Scan (read-only): health {res['score']}/100, {len(res['issues'])} item(s) to review, "
                        f"{fmt(res['space']['total'])} you could free ({fmt(res['space']['clean'] + res['space']['bin'])} cleanable)")
@@ -3210,6 +3211,34 @@ REVIEW_TABS = {"scan": ("", "map", "large", "dups", "old"), "cleanup": ("", "ins
                "protection": ("",), "startup": ("",), "monitor": ("",)}
 PREVIEWS = {}
 RECS = {"last": None}
+APPLIED = set()  # suggestions applied since the last Smart Scan: hidden until a new scan shows the real state
+REC_SKIP_FILE = os.path.join(os.path.dirname(AI_FILE), "rec-skip.json")  # suggestions Windows refused, hidden for 14 days
+
+
+def _skip_sigs():
+    keys = set(APPLIED)
+    try:
+        keys |= {"wg:" + k for k in winget_failures()}
+    except Exception:
+        pass
+    now = time.time()
+    for k, v in (load_json(REC_SKIP_FILE, {}) or {}).items():
+        try:
+            if now - float(v.get("t", 0)) < 14 * 86400:
+                keys.add(k)
+        except Exception:
+            pass
+    return keys
+
+
+def _remember_failed(a, why):
+    try:
+        d = load_json(REC_SKIP_FILE, {}) or {}
+        for k in _sig({"action": a}):
+            d[k] = {"t": time.time(), "why": str(why)[:160]}
+        save_json(REC_SKIP_FILE, d)
+    except Exception:
+        pass
 
 
 def _ai_fields(s, b):
@@ -3750,6 +3779,10 @@ def _rank(it):
 
 def _drop_applied(a):
     """Remove the applied suggestion (and any that overlap it) from the cached list instead of throwing the list away."""
+    try:
+        APPLIED.update(_sig({"action": a}))
+    except Exception:
+        pass
     last = RECS.get("last")
     if not last:
         return
@@ -3788,6 +3821,7 @@ def recommendations(refresh=False):
         meta = prov.meta
     rules = RulesProvider().recommend(ctx)
     items, seen, dropped = [], set(), 0
+    skip, hidden = _skip_sigs(), set()
     for src, lst in (("AI", ai_raw), ("rules", rules)):
         for r in lst:
             it = _finalize(r, src, allowed)
@@ -3795,6 +3829,9 @@ def recommendations(refresh=False):
                 dropped += src == "AI"
                 continue
             k = _sig(it)
+            if k & skip:
+                hidden.add(json.dumps(sorted(k)))
+                continue
             if k & seen:
                 continue
             seen |= k
@@ -3808,7 +3845,7 @@ def recommendations(refresh=False):
         note = "The AI's suggestions were too generic or not allowed on this PC; showing the built-in rules."
     RECS["last"] = {"enabled": True, "provider": cfg["provider"], "items": items, "note": note, "time": time.strftime("%H:%M"),
                     "ai_count": n_ai, "ai_dropped": dropped, "model": meta.get("model", ""), "seconds": meta.get("seconds"),
-                    "json_mode": meta.get("json_mode"), "has_smart": bool(_smart())}
+                    "json_mode": meta.get("json_mode"), "has_smart": bool(_smart()), "hidden": len(hidden)}
     if cfg["provider"] == "openai":
         log_action("AI", f"Recommendations refresh: {n_ai} AI + {len(items) - n_ai} rules item(s), {dropped} AI item(s) dropped"
                          + (f", model {meta.get('model')}, {meta.get('seconds')}s" if meta.get("model") else "") + (f"; {note}" if note else ""))
@@ -3968,7 +4005,11 @@ def action_apply(token, confirm):
         plan = organize_plan(a["folder"], a["rule"], True)
         return {"result": organize_apply(a["folder"], a["rule"], True, [i["name"] for i in plan["items"]]), "undo": "organize"}
     if t == "startup_disable":
-        return {"result": startup_set(a["id"], False), "undo": "startup", "id": a["id"]}
+        try:
+            return {"result": startup_set(a["id"], False), "undo": "startup", "id": a["id"]}
+        except Exception as e:
+            _remember_failed(a, e)  # Windows refused: don't keep suggesting it
+            raise
     if t == "defender_quickscan":
         return {"job": start_job("quickscan", quickscan_job).view(False)}
     if t == "winget_upgrade":
@@ -4915,6 +4956,7 @@ function renderRecs(){const r=D.recs;if(!r)return;const safe=r.items.filter(i=>i
     <span style="color:var(--muted);font-size:12px;flex:1">${esc(r.time||"")}${r.provider==="openai"?` · ${nAI} from AI${r.model?` (${esc(r.model)}${r.seconds!=null?`, ${r.seconds} s`:""})`:""}, ${nR} from rules`:""} · every Apply asks you to confirm first</span>
     <button class="ghost mini" id="recRefresh">Refresh</button><button class="btn mini" id="recSafe" ${safe.length?"":"disabled"}>Apply all safe (${safe.length})…</button></div>`;
   if(r.note)h+=`<div class="note" style="color:var(--warn)">${esc(r.note)}</div>`;
+  if(r.hidden)h+=`<div class="note">${r.hidden} suggestion${r.hidden>1?"s":""} hidden: already applied (run a Smart Scan to re-check) or Windows wouldn't allow it.</div>`;
   if(!r.has_smart)h+=`<div class="note">Run a Smart Scan first so suggestions can use your real sizes and names.</div>`;
   h+=r.items.length?r.items.map(recRow).join(""):`<div class="empty" style="padding:24px">No recommendations right now. Run a Smart Scan for fresh data.</div>`;
   $("#recCard").innerHTML=h;
