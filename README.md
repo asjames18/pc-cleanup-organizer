@@ -39,14 +39,14 @@ Scans are read-only. Nothing is deleted or moved until you confirm the action in
 
 The installer is the supported way to install PC Cleanup & Organizer:
 
-- [Latest GitHub release](https://github.com/asjames18/pc-cleanup-organizer/releases/latest) — `PCCleanup-Setup-3.1.0.zip`
+- [Latest GitHub release](https://github.com/asjames18/pc-cleanup-organizer/releases/latest) — `PCCleanup-Setup-3.1.1.zip`
 - [melanatedintech.com/apps](https://melanatedintech.com/apps)
 
-Current release: **3.1.0**. The zip is 176 KB. Tested on Windows 11.
+Current release: **3.1.1**. The zip is 176 KB. Tested on Windows 11.
 
 ## Install
 
-1. Download `PCCleanup-Setup-3.1.0.zip` and open it.
+1. Download `PCCleanup-Setup-3.1.1.zip` and open it.
 2. Double-click `Install-PCCleanup.cmd`. If you run it from inside the zip, it unpacks itself first. Extracting the zip first also works.
 3. If Windows SmartScreen says "Windows protected your PC", click **More info**, then **Run anyway**. The installer is not code-signed.
 4. The app needs Python 3.10 or newer and no extra packages. If Python is missing, the installer can install Python 3.13.17 for your account from python.org (the download's SHA-256 and signature are checked; no administrator account is required). There is no Whisper model and no pip install step.
@@ -60,19 +60,19 @@ To uninstall, double-click `Uninstall-PCCleanup.cmd` or use **Start menu > Unins
 
 ## Verify the SHA-256
 
-The SHA-256 of `PCCleanup-Setup-3.1.0.zip` is:
+The SHA-256 of `PCCleanup-Setup-3.1.1.zip` is:
 
 ```
-19546a298fa43168f65a7252e05fd7730086478a2aa71b11982bb1692a0b7157
+ceb6f8e7d6a32e2b6ed8d7818f93c13fbf683eb25487c1b883e4ebc1b0f175f3
 ```
 
 On Windows, open Command Prompt in the folder that contains the zip and run:
 
 ```bat
-certutil -hashfile PCCleanup-Setup-3.1.0.zip SHA256
+certutil -hashfile PCCleanup-Setup-3.1.1.zip SHA256
 ```
 
-The hash should match the value above and the `PCCleanup-Setup-3.1.0.zip.sha256` file attached to the [release](https://github.com/asjames18/pc-cleanup-organizer/releases/latest). If it does not match, do not run the installer.
+The hash should match the value above and the `PCCleanup-Setup-3.1.1.zip.sha256` file attached to the [release](https://github.com/asjames18/pc-cleanup-organizer/releases/latest). If it does not match, do not run the installer.
 
 ## System requirements
 
@@ -123,7 +123,7 @@ To build the installer zip:
 python packaging\build_dist.py . dist
 ```
 
-This writes `dist\PCCleanup-Setup-3.1.0.zip` and `dist\PCCleanup-Setup-3.1.0.zip.sha256`. The packager refuses to build if packed files contain API keys or personal strings.
+This writes `dist\PCCleanup-Setup-3.1.1.zip` and `dist\PCCleanup-Setup-3.1.1.zip.sha256`. The packager refuses to build if packed files contain API keys or personal strings.
 
 On first run the app creates `settings.json` and `ai-settings.json`. You can copy the `*.example.json` files to those names and edit them; leave `last_scan` empty. Do not commit the live settings files. Defaults include `old_days` of 90, `dup_min_kb` of 100, and an organize rule of `type` (or `date` for `YYYY\MM` folders).
 

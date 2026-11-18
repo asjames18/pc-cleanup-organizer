@@ -7,7 +7,7 @@ from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 
 IS_WIN = os.name == "nt"
-VERSION = "3.1.0"
+VERSION = "3.1.1"
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -3747,6 +3747,25 @@ def _rank(it):
     return (3, -it["size"])
 
 
+
+def _drop_applied(a):
+    """Remove the applied suggestion (and any that overlap it) from the cached list instead of throwing the list away."""
+    last = RECS.get("last")
+    if not last:
+        return
+    try:
+        k = _sig({"action": a})
+        items = [i for i in last.get("items", []) if not (_sig(i) & k)]
+    except Exception:
+        RECS["last"] = None
+        return
+    for n, it in enumerate(items):
+        it["n"] = n
+    last["items"] = items
+    if last.get("provider") == "openai":
+        last["ai_count"] = sum(1 for i in items if i.get("source") == "AI")
+
+
 def recommendations(refresh=False):
     cfg = load_ai()
     if not cfg["enabled"]:
@@ -3940,7 +3959,7 @@ def action_apply(token, confirm):
     t = a["type"]
     log_action("APPLY", f"Confirmed recommendation: {ACTIONS[t]['label']} " + json.dumps({k: v for k, v in a.items() if k != "paths"}) +
                (f" ({len(a['paths'])} files)" if t == "recycle" else ""))
-    RECS["last"] = None
+    _drop_applied(a)  # keep the rest of the list; the AI is asked again only on Refresh or a new Smart Scan
     if t == "clean":
         return {"job": start_job("clean", clean_job, a["ids"], False).view(False)}
     if t == "recycle":
@@ -4910,7 +4929,7 @@ async function applyActions(actions){let pv;try{pv=await post("/api/recs/preview
   if(!ok){snack("Cancelled. Nothing was changed.");return false}
   const results=[];
   for(const it of pv.items){let res;try{const r=await post("/api/recs/apply",{token:it.token,confirm:"yes"});res=await afterApply(it,r)}catch(e){res={label:it.label,ok:false,text:e.message}}results.push(res)}
-  showResults(results);S.cats=null;ST.data=null;if(S.view==="dashboard")loadRecs(true);return true}
+  showResults(results);S.cats=null;ST.data=null;if(S.view==="dashboard")loadRecs(false);return true}
 function showResults(res){const el=$("#recResult");if(!res.length)return;
   const html=`<div class="card result"><h3>What happened<span style="flex:1"></span><button class="ghost mini" id="resClose">Close</button></h3><ul class="resrow">${res.map(r=>`<li><b>${esc(r.label)}</b>${r.ok?"":'<span class="tag bad">not done</span>'} — ${esc(r.text)}${r.details&&r.details.length?`<ul>${r.details.slice(0,8).map(d=>`<li><small>${esc(d)}</small></li>`).join("")}</ul>`:""}</li>`).join("")}</ul></div>`;
   if(S.view==="dashboard"){el.innerHTML=html;$("#resClose").onclick=()=>el.innerHTML="";el.scrollIntoView({block:"nearest"})}
